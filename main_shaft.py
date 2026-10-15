@@ -76,6 +76,7 @@ class MainShaft:
     # --------------------------------------------------------------------------
     def _compute_loads(self):
         alpha = self.alpha
+        l1, L = self.l1, self.L
 
         # Wind force components
         self.F_wind_x, self.F_wind_y, self.F_wind_z = Wind(
@@ -86,17 +87,24 @@ class MainShaft:
         self.F_gear_x = -self.F_tangential
         self.F_gear_y = self.F_tangential * np.tan(self.phi)
 
-        # Point load at the rotor (z = -l1): wind + weight
+        # Split shaft weight into overhang and between-supports regions
+        # Overhang region (z = -l1 to 0): fraction = l1 / (L + l1)
+        # Between supports (z = 0 to L): fraction = L / (L + l1)
+        W_shaft_overhang = self.W_shaft * (l1 / (L + l1))
+        W_shaft_between = self.W_shaft * (L / (L + l1))
+
+        # Point load at the rotor (z = -l1): wind + weight (rotor + overhang shaft)
         self.F_rotor_x = self.F_wind_x
-        self.F_rotor_y = self.F_wind_y - self.W_rotor * np.cos(alpha)
-        self.F_rotor_z = self.F_wind_z - self.W_rotor * np.sin(alpha)
+        self.F_rotor_y = self.F_wind_y - (self.W_rotor + W_shaft_overhang) * np.cos(alpha)
+        self.F_rotor_z = self.F_wind_z - (self.W_rotor + W_shaft_overhang) * np.sin(alpha)
 
         # Point load at the brake wheel (z = d1): gear reaction + weight
         self.F_wheel_x = self.F_gear_x
         self.F_wheel_y = self.F_gear_y - self.W_wheel * np.cos(alpha)
 
-        # Distributed load of the shaft self-weight [N/m]
-        self.w_shaft_y = -(self.W_shaft / self.L) * np.cos(alpha)
+        # Distributed load of the shaft self-weight between supports [N/m]
+        # Only the part between z=0 and z=L is distributed
+        self.w_shaft_y = -(W_shaft_between / L) * np.cos(alpha)
 
     # --------------------------------------------------------------------------
     # 2. Bearing reactions
