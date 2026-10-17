@@ -5,9 +5,10 @@ class Wind:
     """
     Wind force on the rotor, resolved in the local (tilted) shaft frame.
 
-    Frame convention (same as script.py):
-        z -> along the shaft, pointing from the rotor towards the tail bearing
-        y -> perpendicular to the shaft, in the vertical plane (up when alpha = 0)
+    Frame convention (same as main_shaft.py):
+        z -> along the shaft, pointing from the rotor towards the tail bearing. The rotor end is
+             raised by alpha, so +z points downhill: z = cos(alpha)*horizontal - sin(alpha)*up
+        y -> perpendicular to the shaft, in the vertical plane: y = sin(alpha)*horizontal + cos(alpha)*up
         x -> lateral, perpendicular to the y-z plane
 
     Parameters
@@ -37,8 +38,8 @@ class Wind:
         vertical = F_total * np.sin(gamma)
 
         self.Fx = horizontal * np.sin(beta)
-        self.Fy = vertical * np.cos(alpha) - horizontal * np.cos(beta) * np.sin(alpha)
-        self.Fz = vertical * np.sin(alpha) + horizontal * np.cos(beta) * np.cos(alpha)
+        self.Fy = vertical * np.cos(alpha) + horizontal * np.cos(beta) * np.sin(alpha)
+        self.Fz = horizontal * np.cos(beta) * np.cos(alpha) - vertical * np.sin(alpha)
 
     @property
     def components(self):
